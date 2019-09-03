@@ -5,8 +5,9 @@
 		<label>.NET Alarm</label>
 		<icon>Alarm.png</icon>
 		<metadata key="http://tizen.org/metadata/prefer_dotnet_aot" value="true" />
-        <label xml:lang="ko-kr">닷넷 알람</label>
-        <label xml:lang="en-us">.NET Alarm</label>
+		<metadata key="http://tizen.org/metadata/prefer_nuget_cache" value="true" />
+		<label xml:lang="ko-kr">닷넷 알람</label>
+		<label xml:lang="en-us">.NET Alarm</label>
 		<splash-screens />
 	</ui-application>
 	<shortcut-list />

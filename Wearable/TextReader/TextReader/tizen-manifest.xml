@@ -11,5 +11,6 @@
   <label>TextReader</label>
 	<icon>TextReader.png</icon>
         <metadata key="http://tizen.org/metadata/prefer_dotnet_aot" value="true" />
+        <metadata key="http://tizen.org/metadata/prefer_nuget_cache" value="true" />
 	</ui-application>
 </manifest>

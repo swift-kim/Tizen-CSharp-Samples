@@ -7,6 +7,7 @@
         <label>SystemInfo2</label>
         <icon>SystemInfo.png</icon>
         <metadata key="http://tizen.org/metadata/prefer_dotnet_aot" value="true" />
+        <metadata key="http://tizen.org/metadata/prefer_nuget_cache" value="true" />
         <splash-screens />
     </ui-application>
     <shortcut-list />

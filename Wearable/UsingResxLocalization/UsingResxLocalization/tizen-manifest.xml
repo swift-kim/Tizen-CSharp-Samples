@@ -5,6 +5,7 @@
         <label>.Net UsingResxLocalization</label>
         <icon>UsingResxLocalization.png</icon>
         <metadata key="http://tizen.org/metadata/prefer_dotnet_aot" value="true" />
+        <metadata key="http://tizen.org/metadata/prefer_nuget_cache" value="true" />
         <label xml:lang="ko-kr">.Net Resx한국</label>
         <label xml:lang="en-us">.Net ResxUSA</label>
         <label xml:lang="ja-jp">.Net Resx日本</label>

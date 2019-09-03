@@ -8,6 +8,7 @@
         <label xml:lang="hi-in">.NET वॉइस मेमो</label>
         <label xml:lang="ko-kr">닷넷 음성 메모</label>
         <metadata key="http://tizen.org/metadata/prefer_dotnet_aot" value="true" />
+        <metadata key="http://tizen.org/metadata/prefer_nuget_cache" value="true" />
         <background-category value="media" />
         <splash-screens />
     </ui-application>
