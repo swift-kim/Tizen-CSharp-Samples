@@ -13,7 +13,7 @@
 //limitations under the License.
 
 using System;
-using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;
 using Weather.Config;
@@ -37,14 +37,14 @@ namespace Weather.ViewModels
         private Command _initializeCommand;
 
         /// <summary>
-        /// Local storage of task that obtains current weather.
+        /// Local storage of current weather.
         /// </summary>
-        private NotificationTask<CurrentWeather> _currentWeather;
+        private CurrentWeather _currentWeather;
 
         /// <summary>
         /// Local storage of city time zone.
         /// </summary>
-        private NotificationTask<Models.Location.TimeZone> _cityTimeZone;
+        private Models.Location.TimeZone _cityTimeZone;
 
         /// <summary>
         /// Local storage of command that shows screen with forecast.
@@ -54,7 +54,7 @@ namespace Weather.ViewModels
         /// <summary>
         /// Local storage of forecast data.
         /// </summary>
-        private NotificationTask<Forecast> _forecast;
+        private Forecast _forecast;
 
         #endregion
 
@@ -83,9 +83,9 @@ namespace Weather.ViewModels
         }
 
         /// <summary>
-        /// Gets or sets task that obtains current weather.
+        /// Gets or sets the current weather.
         /// </summary>
-        public NotificationTask<CurrentWeather> CurrentWeather
+        public CurrentWeather CurrentWeather
         {
             get => _currentWeather;
             set => SetProperty(ref _currentWeather, value);
@@ -94,7 +94,7 @@ namespace Weather.ViewModels
         /// <summary>
         /// Gets or sets city time zone.
         /// </summary>
-        public NotificationTask<Models.Location.TimeZone> CityTimeZone
+        public Models.Location.TimeZone CityTimeZone
         {
             get => _cityTimeZone;
             set => SetProperty(ref _cityTimeZone, value);
@@ -130,7 +130,7 @@ namespace Weather.ViewModels
         /// <summary>
         /// Gets or sets forecast data.
         /// </summary>
-        public NotificationTask<Forecast> Forecast
+        public Forecast Forecast
         {
             get => _forecast;
             set => SetProperty(ref _forecast, value);
@@ -139,11 +139,8 @@ namespace Weather.ViewModels
         /// <summary>
         /// Indicates if initialization was completed.
         /// </summary>
-        public bool InitializationCompleted => ((App)Application.Current).IsInitialized =
-            Forecast != null && CurrentWeather != null && CityTimeZone != null &&
-            Forecast.IsSuccessfullyCompleted &&
-            CurrentWeather.IsSuccessfullyCompleted &&
-            CityTimeZone.IsSuccessfullyCompleted;
+        public bool InitializationCompleted => ((App) Application.Current).IsInitialized =
+            Forecast != null && CurrentWeather != null && CityTimeZone != null;
 
         public bool InitializationInProgress => !InitializationCompleted;
 
@@ -156,15 +153,38 @@ namespace Weather.ViewModels
         /// </summary>
         public CurrentWeatherViewModel()
         {
-            InitializeCommand = new Command(o =>
+            InitializeCommand = new Command(async () =>
             {
                 CurrentWeather = null;
                 Forecast = null;
                 OnPropertyChanged(nameof(InitializationCompleted));
                 OnPropertyChanged(nameof(InitializationInProgress));
 
-                CityTimeZone = new NotificationTask<Models.Location.TimeZone>(InitializeTimeZone());
-                CityTimeZone.PropertyChanged += CityTimeZoneOnPropertyChanged;
+                try
+                {
+                    CityTimeZone = await InitializeTimeZone();
+                    CurrentWeather = await InitializeWeather();
+                    Forecast = await InitializeForecast();
+
+                    foreach (var currentWeather in Forecast.WeatherList)
+                    {
+                        if (currentWeather != null)
+                        {
+                            currentWeather.CityName = CityData.Name;
+                        }
+                    }
+
+                    OnPropertyChanged(nameof(InitializationCompleted));
+                    OnPropertyChanged(nameof(InitializationInProgress));
+                }
+                catch (HttpException ex)
+                {
+                    await ErrorHandler.HandleException((int)ex.StatusCode, ex.StatusCode.ToString());
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(ex);
+                }
             });
 
             CheckForecastCommand = new Command(CheckForecast);
@@ -174,11 +194,11 @@ namespace Weather.ViewModels
         /// Pushes page with forecast data to navigation stack.
         /// </summary>
         /// <param name="param">Page to push to navigation stack.</param>
-        private void CheckForecast(object param)
+        private async void CheckForecast(object param)
         {
             if (param is Page page)
             {
-                Navigation.PushAsync(page);
+                await Navigation.PushAsync(page);
             }
         }
 
@@ -228,96 +248,6 @@ namespace Weather.ViewModels
             request.AddParameter("sensor", "false");
 
             return await request.Get();
-        }
-
-        /// <summary>
-        /// Starts request to weather API after time zone request is completed.
-        /// </summary>
-        /// <param name="sender">Object that sent event.</param>
-        /// <param name="propertyChangedEventArgs">Arguments of the event.</param>
-        private void CityTimeZoneOnPropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
-        {
-            if (propertyChangedEventArgs.PropertyName == "Result")
-            {
-                CurrentWeather = new NotificationTask<CurrentWeather>(InitializeWeather());
-                Forecast = new NotificationTask<Forecast>(InitializeForecast());
-
-                CurrentWeather.PropertyChanged += CurrentWeatherOnPropertyChanged;
-                Forecast.PropertyChanged += ForecastOnPropertyChanged;
-            }
-        }
-
-        /// <summary>
-        /// Callback method that is invoked on Forecast property change.
-        /// </summary>
-        /// <param name="sender">Object that sent event.</param>
-        /// <param name="propertyChangedEventArgs">Arguments of the event.</param>
-        private void ForecastOnPropertyChanged(object sender, PropertyChangedEventArgs propertyChangedEventArgs)
-        {
-            var task = ForecastOnPropertyChangedTask(propertyChangedEventArgs.PropertyName);
-        }
-
-        /// <summary>
-        /// Callback method that is invoked on Current Weather property change.
-        /// </summary>
-        /// <param name="sender">Object that sent event.</param>
-        /// <param name="propertyChangedEventArgs">Arguments of the event.</param>
-        private void CurrentWeatherOnPropertyChanged(object sender,
-            PropertyChangedEventArgs propertyChangedEventArgs)
-        {
-            var task = CurrentWeatherOnPropertyChangedTask(propertyChangedEventArgs.PropertyName);
-        }
-
-        /// <summary>
-        /// Method executed when one of Forecast property has changed.
-        /// </summary>
-        /// <param name="propertyName">Name of property that has changed.</param>
-        /// <returns>Task to be executed.</returns>
-        private async Task ForecastOnPropertyChangedTask(string propertyName)
-        {
-            if (propertyName == nameof(NotificationTask<Forecast>.IsFaulted))
-            {
-                if (Forecast.InnerException is HttpException exception)
-                {
-                    await ErrorHandler.HandleException((int)exception.StatusCode, exception.StatusCode.ToString());
-                }
-            }
-
-            if (propertyName == nameof(NotificationTask<Forecast>.IsSuccessfullyCompleted))
-            {
-                foreach (var currentWeather in Forecast.Result.WeatherList)
-                {
-                    if (currentWeather != null)
-                    {
-                        currentWeather.CityName = CityData.Name;
-                    }
-                }
-
-                OnPropertyChanged(nameof(InitializationCompleted));
-                OnPropertyChanged(nameof(InitializationInProgress));
-            }
-        }
-
-        /// <summary>
-        /// Method executed when one of Current Weather property has changed.
-        /// </summary>
-        /// <param name="propertyName">Name of property that has changed.</param>
-        /// <returns>Task to be executed.</returns>
-        private async Task CurrentWeatherOnPropertyChangedTask(string propertyName)
-        {
-            if (propertyName == nameof(NotificationTask<CurrentWeather>.IsFaulted))
-            {
-                if (CurrentWeather.InnerException is HttpException exception)
-                {
-                    await ErrorHandler.HandleException((int)exception.StatusCode, exception.StatusCode.ToString());
-                }
-            }
-
-            if (propertyName == nameof(NotificationTask<CurrentWeather>.IsSuccessfullyCompleted))
-            {
-                OnPropertyChanged(nameof(InitializationCompleted));
-                OnPropertyChanged(nameof(InitializationInProgress));
-            }
         }
 
         #endregion

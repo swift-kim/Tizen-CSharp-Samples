@@ -34,7 +34,7 @@
             <converters:ImageSourceConverter x:Key="ImageSourceConverter" />
             <converters:MeasurementSystemConverter x:Key="MeasurementSystemConverter" />
             <location:TimeZone x:Key="TimeZone"
-                               Offset="{Binding Source={x:Reference Name=ViewModel}, Path=CityTimeZone.Result.Offset}" />
+                               Offset="{Binding Source={x:Reference Name=ViewModel}, Path=CityTimeZone.Offset}" />
         </ResourceDictionary>
     </w:CirclePage.Resources>
 
@@ -50,62 +50,58 @@
                      IsVisible="{Binding InitializationCompleted}">
 
                 <Label 
-                   Text="{Binding CurrentWeather.Result.CityName}"
+                   Text="{Binding CurrentWeather.CityName}"
                    HeightRequest="120"
                    MinimumHeightRequest="120"               
                    FontSize="12"
                    HorizontalTextAlignment="Center"
-                   VerticalTextAlignment="End"
-            />
+                   VerticalTextAlignment="End" />
 
                 <controls:DoubleLabel
-                    MainText="{Binding CurrentWeather.Result.TimeStamp, Converter={StaticResource TimeStampToDateConverter}}"
+                    MainText="{Binding CurrentWeather.TimeStamp, Converter={StaticResource TimeStampToDateConverter}}"
                     SubText="Time of measurement." />
                 <StackLayout Orientation="Horizontal">
                     <controls:DoubleLabel
-                    MainText="{Binding CurrentWeather.Result.SunData.SunriseTimeStamp,
+                    MainText="{Binding CurrentWeather.SunData.SunriseTimeStamp,
                             Converter={StaticResource TimeStampToTimeConverter}, ConverterParameter={StaticResource TimeZone}}"
                     SubText="Sunrise" />
                     <controls:DoubleLabel
-                    MainText="{Binding CurrentWeather.Result.SunData.SunsetTimeStamp,
+                    MainText="{Binding CurrentWeather.SunData.SunsetTimeStamp,
                             Converter={StaticResource TimeStampToTimeConverter}, ConverterParameter={StaticResource TimeZone}}"
                     SubText="Sunset" />
                 </StackLayout>
 
                 <Image
-                    Source="{Binding CurrentWeather.Result.Weather[0].Icon, Converter={StaticResource ImageSourceConverter}}"
+                    Source="{Binding CurrentWeather.Weather[0].Icon, Converter={StaticResource ImageSourceConverter}}"
                     HeightRequest="100"
                     WidthRequest="100"
                     Aspect="AspectFit" />
                 <Label
-                    Text="{Binding CurrentWeather.Result.Weather[0].Description}"                    
+                    Text="{Binding CurrentWeather.Weather[0].Description}"                    
                     HorizontalTextAlignment="Center"
                     VerticalTextAlignment="Center"
                     FontSize="8" />
-
-
-                
                 
                 <controls:DoubleLabel
-                        MainText="{Binding CurrentWeather.Result.WeatherData.Temperature, Converter={StaticResource MeasurementSystemConverter}, ConverterParameter='temp'}"
+                        MainText="{Binding CurrentWeather.WeatherData.Temperature, Converter={StaticResource MeasurementSystemConverter}, ConverterParameter='temp'}"
                         SubText="Temperature" />
 
 
                 <StackLayout Orientation="Horizontal">
                     <controls:DoubleLabel
-                        MainText="{Binding CurrentWeather.Result.Clouds.Percent, StringFormat=' {0}%'}"
+                        MainText="{Binding CurrentWeather.Clouds.Percent, StringFormat=' {0}%'}"
                         SubText="Clouds percent" />
                     <controls:DoubleLabel
-                        MainText="{Binding CurrentWeather.Result.WeatherData.Pressure, StringFormat=' {0} hPa'}"
+                        MainText="{Binding CurrentWeather.WeatherData.Pressure, StringFormat=' {0} hPa'}"
                         SubText="Pressure" />
                 </StackLayout>
 
                 <StackLayout Orientation="Horizontal">
                     <controls:DoubleLabel
-                        MainText="{Binding CurrentWeather.Result.Wind.Speed, Converter={StaticResource MeasurementSystemConverter}, ConverterParameter='speed'}"
+                        MainText="{Binding CurrentWeather.Wind.Speed, Converter={StaticResource MeasurementSystemConverter}, ConverterParameter='speed'}"
                         SubText="Wind speed" />
                     <controls:DoubleLabel
-                        MainText="{Binding CurrentWeather.Result.Wind.Degree, Converter={StaticResource CardinalDirectionConverter}}"
+                        MainText="{Binding CurrentWeather.Wind.Degree, Converter={StaticResource CardinalDirectionConverter}}"
                         SubText="Wind direction" />
                 </StackLayout>
 
@@ -120,8 +116,8 @@
                         <views:ForecastPage>
                             <views:ForecastPage.BindingContext>
                                 <viewModels:ForecastViewModel
-                            Forecast="{Binding Source={x:Reference Name=ViewModel}, Path=Forecast.Result}"
-                            Offset="{Binding Source={x:Reference Name=ViewModel}, Path=CityTimeZone.Result.Offset}"
+                            Forecast="{Binding Source={x:Reference Name=ViewModel}, Path=Forecast}"
+                            Offset="{Binding Source={x:Reference Name=ViewModel}, Path=CityTimeZone.Offset}"
                             CityName="{Binding Source={x:Reference Name=ViewModel}, Path=CityData.Name}" />
                             </views:ForecastPage.BindingContext>
                         </views:ForecastPage>
